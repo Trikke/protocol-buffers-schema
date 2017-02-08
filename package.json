@@ -1,7 +1,7 @@
 {
-  "name": "protocol-buffers-schema",
-  "version": "3.1.1",
-  "description": "No nonsense protocol buffers schema parser written in Javascript",
+  "name": "massive-protocol-buffers-schema",
+  "version": "1.0.0",
+  "description": "Parser for Massive Proto buffers",
   "main": "index.js",
   "devDependencies": {
     "standard": "^5.4.1",
@@ -12,20 +12,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mafintosh/protocol-buffers-schema"
+    "url": "https://github.com/Trikke/protocol-buffers-schema"
   },
   "keywords": [
-    "protobuf",
-    "protocol",
-    "buffers",
     "schema",
-    "parser",
-    "parse"
+    "parser"
   ],
-  "author": "Mathias Buus",
+  "author": "Trikke",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mafintosh/protocol-buffers-schema/issues"
+    "url": "https://github.com/Trikke/protocol-buffers-schema/issues"
   },
-  "homepage": "https://github.com/mafintosh/protocol-buffers-schema"
+  "homepage": "https://github.com/Trikke/protocol-buffers-schema"
 }
