@@ -448,7 +448,7 @@ var onservice = function (tokens) {
         if (service.options[opt.name] !== undefined) throw new Error('Duplicate option ' + opt.name)
         service.options[opt.name] = opt.value
         break
-      case 'rpc':
+      case 'function':
         service.methods.push(onrpc(tokens))
         break
       default:
