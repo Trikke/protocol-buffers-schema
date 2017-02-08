@@ -481,6 +481,7 @@ var onrpc = function (tokens) {
 
   rpc.input_type = tokens.shift()
 
+  if (tokens[0] !== ')') console.log('Expected ) but found ' + tokens[0])
   tokens.shift()
 
   if (tokens[0] !== 'returns') throw new Error('Expected returns but found ' + tokens[0])
