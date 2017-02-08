@@ -475,10 +475,43 @@ var onrpc = function (tokens) {
     // check if there is an argument
     if (tokens[0] !== ')') {
         do {
-            rpc.input_types.push({
-                type: tokens.shift(),
-                name: tokens.shift()
-            });
+            input_type = {};
+            switch (tokens[0]) {
+                case 'map':
+                    input_type.type = 'map'
+                    input_type.map = {from: null, to: null}
+                    tokens.shift()
+                    if (tokens[0] !== '<') throw new Error('Unexpected token in map type: ' + tokens[0])
+                    tokens.shift()
+                    input_type.map.from = tokens.shift()
+                    if (tokens[0] !== ',') throw new Error('Unexpected token in map type: ' + tokens[0])
+                    tokens.shift()
+                    input_type.map.to = tokens.shift()
+                    if (tokens[0] !== '>') throw new Error('Unexpected token in map type: ' + tokens[0])
+                    tokens.shift()
+                    input_type.name = tokens.shift()
+                    break
+
+                case 'repeated':
+                    input_type = {
+                        repeated: tokens.shift() === "repeated",
+                        type: tokens.shift(),
+                        name: tokens.shift()
+                    };
+                    break;
+
+                default:
+                    input_type = {
+                        repeated: false,
+                        type: tokens.shift(),
+                        name: tokens.shift()
+                    };
+                    break
+            }
+
+            console.log(input_type)
+
+            rpc.input_types.push(input_type);
             if (tokens[0] === ",") {
                 tokens.shift();
             }
@@ -506,10 +539,37 @@ var onrpc = function (tokens) {
         rpc.server_streaming = true
     }
 
-    rpc.output_type = tokens.shift()
+    switch (tokens[0]) {
+        case 'map':
+            rpc.output_type = {};
+            rpc.output_type.type = 'map'
+            rpc.output_type.map = {from: null, to: null}
+            tokens.shift()
+            if (tokens[0] !== '<') throw new Error('Unexpected token in map type: ' + tokens[0])
+            tokens.shift()
+            rpc.output_type.map.from = tokens.shift()
+            if (tokens[0] !== ',') throw new Error('Unexpected token in map type: ' + tokens[0])
+            tokens.shift()
+            rpc.output_type.map.to = tokens.shift()
+            if (tokens[0] !== '>') throw new Error('Unexpected token in map type: ' + tokens[0])
+            tokens.shift()
+            break
 
-    if (tokens[0] !== ')') throw new Error('Expected ) but found ' + tokens[0])
-    tokens.shift()
+        case 'repeated':
+            rpc.output_type = {
+                repeated: tokens.shift() === "repeated",
+                type: tokens.shift()
+            };
+            break;
+
+        default:
+            rpc.output_type = {
+                repeated: false,
+                type: tokens.shift()
+            };
+            break
+    }
+    tokens.shift();
 
     if (tokens[0] === ';') {
         tokens.shift()
