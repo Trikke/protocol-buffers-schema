@@ -509,8 +509,6 @@ var onrpc = function (tokens) {
                     break
             }
 
-            console.log(input_type)
-
             rpc.input_types.push(input_type);
             if (tokens[0] === ",") {
                 tokens.shift();
