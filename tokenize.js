@@ -1,7 +1,7 @@
 module.exports = function (sch) {
   var noComments = function (line) {
     var i = line.indexOf('//')
-    return i > -1 ? line.slice(0, i) : line
+    return i > -1 ? line.split(' ').join('+') : line
   }
 
   var noMultilineComments = function () {

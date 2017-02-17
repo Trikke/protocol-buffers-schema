@@ -34,6 +34,7 @@ var onfieldoptions = function (tokens) {
 
 var onfield = function (tokens) {
     var field = {
+        comment: [],
         name: null,
         type: null,
         map: null,
@@ -66,6 +67,7 @@ var onfield = function (tokens) {
                 var t = tokens.shift();
                 field.required = t === 'required';
                 field.repeated = t === 'repeated';
+                field.comment = oncomment(tokens);
                 field.type = tokens.shift();
                 field.name = tokens.shift();
                 break;
@@ -97,12 +99,8 @@ var onmessagebody = function (tokens) {
         extends: [],
         extensions: null
     };
-    var comment = "";
     while (tokens.length) {
         switch (tokens[0]) {
-            case "//":
-                comment = oncomment(tokens);
-                break;
             case 'map':
             case 'repeated':
             case 'optional':
@@ -182,6 +180,7 @@ var onmessage = function (tokens) {
     var lvl = 1;
     var body = [];
     var msg = {
+        comment: [],
         name: tokens.shift(),
         enums: [],
         extends: [],
@@ -193,12 +192,14 @@ var onmessage = function (tokens) {
     tokens.shift();
 
     while (tokens.length) {
+
         if (tokens[0] === '{') lvl++;
         else if (tokens[0] === '}') lvl--;
 
         if (!lvl) {
             tokens.shift();
             body = onmessagebody(body);
+            msg.comment = oncomment(tokens);
             msg.enums = body.enums;
             msg.messages = body.messages;
             msg.fields = body.fields;
@@ -247,7 +248,19 @@ var onsyntaxversion = function (tokens) {
     return version
 };
 
+var oncomment = function(tokens) {
+    var comment = [];
+    while (tokens.length) {
+        if (tokens[0].startsWith("//")) {
+          comment.push(tokens.shift().slice(3).split('+').join(' '));
+        } else {
+            return comment;
+        }
+    }
+}
+
 var onenumvalue = function (tokens) {
+    var comment = oncomment(tokens);
     if (tokens.length < 4) throw new Error('Invalid enum value: ' + tokens.slice(0, 3).join(' '));
     if (tokens[1] !== '=') throw new Error('Expected = but found ' + tokens[1]);
     if (tokens[3] !== ';' && tokens[3] !== '[') throw new Error('Expected ; or [ but found ' + tokens[1]);
@@ -265,6 +278,7 @@ var onenumvalue = function (tokens) {
     tokens.shift(); // expecting the semicolon here
 
     return {
+        comment: comment,
         name: name,
         value: val.value,
         options: val.options
@@ -433,6 +447,7 @@ var onservice = function (tokens) {
     tokens.shift();
 
     while (tokens.length) {
+        var comment = oncomment(tokens);
         if (tokens[0] === '}') {
             tokens.shift();
             // there goes optional semicolon after the enclosing "}"
@@ -447,7 +462,7 @@ var onservice = function (tokens) {
                 service.options[opt.name] = opt.value;
                 break;
             case 'function':
-                service.methods.push(onrpc(tokens));
+                service.methods.push(onrpc(tokens, comment));
                 break;
             default:
                 throw new Error('Unexpected token in service: ' + tokens[0])
@@ -457,10 +472,11 @@ var onservice = function (tokens) {
     throw new Error('No closing tag for service')
 };
 
-var onrpc = function (tokens) {
+var onrpc = function (tokens, comment) {
     tokens.shift();
 
     var rpc = {
+        comment: comment,
         name: tokens.shift(),
         input_types: [],
         output_type: null,
@@ -602,21 +618,6 @@ var onrpc = function (tokens) {
     throw new Error('No closing tag for rpc')
 };
 
-var oncomment = function (tokens) {
-
-    var comment = "";
-
-    while (tokens.length) {
-        console.log(tokens[0]);
-        if (syntaxwords.indexOf(tokens[0]) >= 0) {
-            console.log("the comment: " + comment);
-            return comment;
-        }
-        comment += tokens.shift();
-    }
-
-};
-
 var parse = function (buf) {
     var tokens = tokenize(buf.toString());
     // check for isolated strings in tokens by looking for opening quote
@@ -639,7 +640,7 @@ var parse = function (buf) {
         }
     }
     var schema = {
-        comment: "",
+        comment: [],
         syntax: 3,
         package: null,
         imports: [],
@@ -652,11 +653,8 @@ var parse = function (buf) {
     var firstline = true;
 
     while (tokens.length) {
+        schema.comment = oncomment(tokens);
         switch (tokens[0]) {
-            case "//":
-                schema.comment = oncomment(tokens);
-                break;
-
             case 'package':
                 schema.package = onpackagename(tokens);
                 break;
@@ -667,11 +665,15 @@ var parse = function (buf) {
                 break;
 
             case 'message':
-                schema.messages.push(onmessage(tokens));
+                var message = onmessage(tokens);
+                message.comment = schema.comment;
+                schema.messages.push(message);
                 break;
 
             case 'enum':
-                schema.enums.push(onenum(tokens));
+                var enuum = onenum(tokens);
+                enuum.comment = schema.comment;
+                schema.enums.push(enuum);
                 break;
 
             case 'option':
@@ -690,7 +692,10 @@ var parse = function (buf) {
 
             case 'service':
                 if (!schema.services) schema.services = [];
-                schema.services.push(onservice(tokens));
+
+                var service = onservice(tokens);
+                service.comment = schema.comment;
+                schema.services.push(service);
                 break;
 
             default:
