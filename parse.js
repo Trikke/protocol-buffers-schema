@@ -440,6 +440,7 @@ var onservice = function (tokens) {
     var service = {
         name: tokens.shift(),
         methods: [],
+        enums: [],
         options: {}
     };
 
@@ -464,6 +465,9 @@ var onservice = function (tokens) {
             case 'function':
                 service.methods.push(onrpc(tokens, comment));
                 break;
+			case 'enum':
+				service.enums.push(onenum(tokens));
+				break;
             default:
                 throw new Error('Unexpected token in service: ' + tokens[0])
         }
